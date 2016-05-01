@@ -32,19 +32,24 @@ export default class Grid {
   clearCell(x, y) {
     let currentCell = this.getCell(x, y);
     let currentRow = y;
+    // printErr('clearing ', x, y, currentCell.value);
     while (!currentCell.isEmpty()) {
-      let nextCell = this.getCell(x, --currentRow);
-      while (Utils.isSameColor(currentCell, nextCell)) {
-        this.clearCell(nextCell.x, nextCell.y);
-        nextCell = this.getCell(x, --currentRow);
+      if (parseInt(currentCell.value) !== 0) {
+        const skulls = this.getAdjacentSkulls(currentCell);
+        skulls.forEach((skull) => this.clearCell(skull.x, skull.y));
       }
-      // TODO Supprimer les cranes
+      const nextCell = this.getCell(x, --currentRow);
+      // while (Utils.isSameColor(currentCell, nextCell) || Utils.isBothSkull(currentCell, nextCell)) {
+      //   this.clearCell(nextCell.x, nextCell.y);
+      //   nextCell = this.getCell(nextCell.x, nextCell.y);
+      // }
       currentCell.value = nextCell.value;
-      currentCell = nextCell;
+      currentCell = this.getCell(x, currentRow);
     }
   }
 
   clearCells(cellsList) {
+    Utils.sortCells(cellsList);
     const colorToClear = cellsList[0].value;
     cellsList.forEach((cell) => {
       if (parseInt(colorToClear) === parseInt(cell.value)) {
@@ -92,7 +97,8 @@ export default class Grid {
       }
     }
     const colorBonus = Utils.computeColorBonus(colorList.length);
-    printErr(Utils.computeScore(nbCellCleared, chainPower, colorBonus, groupBonus));
+    // printErr(Utils.computeScore(nbCellCleared, chainPower, colorBonus, groupBonus));
+    return Utils.computeScore(nbCellCleared, chainPower, colorBonus, groupBonus);
   }
 
   resolveFullBoard(colorList) {
@@ -138,7 +144,6 @@ export default class Grid {
       if (typeof(initialDirection) === 'undefined' || initialDirection !== direction) {
         const adjacentCell = this.getAdjacentCell(cell, direction);
         if (Utils.isSameColor(cell, adjacentCell) && !Utils.isCellInList(adjacentCell, previousCells)) {
-          // printErr(cell.toString(), adjacentCell.toString(), directionName, previousCells);
           cellsList.push(...this.getSameAdjacentCells(adjacentCell, getOppositeDirection(direction), previousCells));
         }
       }
@@ -158,6 +163,18 @@ export default class Grid {
       default:
         return this.getCell(cell.x + 1, cell.y);
     }
+  }
+
+  getAdjacentSkulls(cell) {
+    const skulls = [];
+    Object.keys(Directions).forEach((directionName) => {
+      const direction = Directions[directionName];
+      const adjacentCell = this.getAdjacentCell(cell, direction);
+      if (parseInt(adjacentCell.value) === 0) {
+        skulls.push(adjacentCell);
+      }
+    });
+    return skulls;
   }
 
   putCell(column, value) {
@@ -180,7 +197,7 @@ export default class Grid {
         if (column > 0) {
           cell2 = this.putCell(column - 1, color2);
         } else {
-          cell2 = this.putCell(column, color2);
+          return -1;
         }
         break;
       case 3:
@@ -193,11 +210,14 @@ export default class Grid {
         if (column < 5) {
           cell2 = this.putCell(column + 1, color2);
         } else {
-          cell2 = this.putCell(column, color2);
+          return -1;
         }
         break;
     }
-    this.resolve(cell1, cell2);
+    if (cell1.y === -1 || cell2.y === -1) {
+      return -1;
+    }
+    return this.resolve(cell1, cell2);
   }
 
   printErr() {

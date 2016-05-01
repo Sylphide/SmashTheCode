@@ -1,23 +1,22 @@
-import Grid from './Grid';
+// import Grid from './Grid';
+import Population from './Population';
+import { NB_GENERATION } from './Constants';
 
-let count = 0;
+let population;
 while (true) {
-  let nextColorA = 0;
-  let nextColorB = 0;
+  const blocks = [];
   for (let i = 0; i < 8; i++) {
     const inputs = readline().split(' ');
-    const colorA = parseInt(inputs[0]); // color of the first block
-    const colorB = parseInt(inputs[1]); // color of the attached block
-    if (i === 0) {
-      nextColorA = colorA;
-      nextColorB = colorB;
-    }
+    blocks.push({
+      colorA: parseInt(inputs[0]), // color of the first block
+      colorB: parseInt(inputs[1]) // color of the attached block
+    });
   }
   const rows = [];
   for (let i = 0; i < 12; i++) {
     rows.push(readline());
   }
-  const ownGrid = new Grid(rows);
+  // const ownGrid = new Grid(rows);
   // ownGrid.printErr();
   // if (ownGrid.getTopCell(2) && ownGrid.getTopCell(2).y < 10) {
   //   ownGrid.clearCell(2, 11);
@@ -30,8 +29,25 @@ while (true) {
   }
   // const enemyGrid = new Grid(enemyRows);
   // enemyGrid.printErr();
-  count = (count + 1) % 6;
-  ownGrid.putCellBlock(count, nextColorA, nextColorB, 3);
+  const start = new Date();
   // ownGrid.printErr();
-  print(`${count} 3`); // "x": the column in which to drop your blocks
+
+  if (!population) {
+    population = new Population(blocks, rows, true);
+  } else {
+    population.shiftBlocks(blocks, rows);
+  }
+  for (let i = 0; i < NB_GENERATION; i++) {
+    // population.printErr();
+    // const fittest = population.getFittest();
+    // printErr(fittest.toString(), fittest.getFitness());
+    population.evolve();
+  }
+
+  const end = new Date();
+  printErr(end.getTime() - start.getTime());
+  const fittest = population.getFittest();
+  printErr(fittest.toString(), fittest.getFitness());
+  // fittest.finalGrid.printErr();
+  print(fittest.toPrint()); // "x": the column in which to drop your blocks
 }

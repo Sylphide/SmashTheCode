@@ -8,6 +8,10 @@ function isSameColor(cell1, cell2) {
   return parseInt(cell1.value) !== 0 && parseInt(cell1.value) === parseInt(cell2.value);
 }
 
+function isBothSkull(cell1, cell2) {
+  return parseInt(cell1.value) === 0 && parseInt(cell1.value) === parseInt(cell2.value);
+}
+
 function isEqual(cell1, cell2) {
   return cell1.x === cell2.x && cell1.y === cell2.y;
 }
@@ -43,10 +47,21 @@ function computeScore(nbBlocks, chainPower, colorBonus, groupBonus) {
   return (nbBlocks * 10) * scoreMultiplier;
 }
 
+function sortCells(cellsList) {
+  cellsList.sort((cell1, cell2) => {
+    if (cell1.y < cell2.y) {
+      return -1;
+    }
+    return 1;
+  });
+}
+
 export const Utils = {
   addColor,
   isSameColor,
+  isBothSkull,
   isEqual,
+  sortCells,
   isCellInList,
   computeGroupBonus,
   computeColorBonus,
