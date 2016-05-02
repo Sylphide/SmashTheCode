@@ -32,10 +32,12 @@ export default class Grid {
   clearCell(x, y) {
     let currentCell = this.getCell(x, y);
     let currentRow = y;
+    let skullCleared = 0;
     // printErr('clearing ', x, y, currentCell.value);
     while (!currentCell.isEmpty()) {
       if (parseInt(currentCell.value) !== 0) {
         const skulls = this.getAdjacentSkulls(currentCell);
+        skullCleared = skulls.length;
         skulls.forEach((skull) => this.clearCell(skull.x, skull.y));
       }
       const nextCell = this.getCell(x, --currentRow);
@@ -46,16 +48,19 @@ export default class Grid {
       currentCell.value = nextCell.value;
       currentCell = this.getCell(x, currentRow);
     }
+    return skullCleared;
   }
 
   clearCells(cellsList) {
     Utils.sortCells(cellsList);
+    let skullCleared = 0;
     const colorToClear = cellsList[0].value;
     cellsList.forEach((cell) => {
       if (parseInt(colorToClear) === parseInt(cell.value)) {
-        this.clearCell(cell.x, cell.y);
+        skullCleared += this.clearCell(cell.x, cell.y);
       }
     });
+    return skullCleared;
   }
 
   resolve(cell1, cell2) {
@@ -63,6 +68,7 @@ export default class Grid {
     const colorList = [];
     let chainPower = 0;
     let groupBonus = 0;
+    let skullCleared = 0;
     let cell1List = this.getSameAdjacentCells(cell1);
     let cell2List = [];
     let cell2Done = false;
@@ -82,13 +88,13 @@ export default class Grid {
       nbCellCleared += cell1List.length;
       groupBonus += Utils.computeGroupBonus(cell1List.length);
       Utils.addColor(colorList, parseInt(cell1List[0].value));
-      this.clearCells(cell1List);
+      skullCleared += this.clearCells(cell1List);
     }
     if (cell2List.length >= 4) {
       nbCellCleared += cell2List.length;
       groupBonus += Utils.computeGroupBonus(cell2List.length);
       Utils.addColor(colorList, parseInt(cell2List[0].value));
-      this.clearCells(cell2List);
+      skullCleared += this.clearCells(cell2List);
     }
 
     if (nbCellCleared > 0) {
@@ -97,12 +103,13 @@ export default class Grid {
         chainPower++;
         nbCellCleared += stepResult.nbCellsCleared;
         groupBonus += stepResult.groupBonus;
+        skullCleared += stepResult.skullCleared;
         stepResult = this.resolveFullBoard(colorList);
       }
     }
     const colorBonus = Utils.computeColorBonus(colorList.length);
     // printErr(Utils.computeScore(nbCellCleared, chainPower, colorBonus, groupBonus));
-    return Utils.computeScore(nbCellCleared, chainPower + 2, colorBonus, groupBonus);
+    return Utils.computeScore(nbCellCleared, chainPower, colorBonus, groupBonus, skullCleared);
   }
 
   resolveFullBoard(colorList) {
@@ -130,13 +137,15 @@ export default class Grid {
       }
     }
     let nbCellsCleared = 0;
+    let skullCleared = 0;
     cellsToClear.forEach((cellsList) => {
       nbCellsCleared += cellsList.length;
-      this.clearCells(cellsList);
+      skullCleared += this.clearCells(cellsList);
     });
     return {
       nbCellsCleared,
-      groupBonus
+      groupBonus,
+      skullCleared
     };
   }
 

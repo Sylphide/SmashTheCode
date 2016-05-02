@@ -45,7 +45,7 @@ while (true) {
   let timer = 0;
   let maxStepTime = 0;
   let previousStepTime = start;
-  while (timer < 100 - (maxStepTime + 20) && i < NB_GENERATION && !(((fittest.nextScore / 70) > 6 && (score / 70) % 6 > 4) || fittest.getFitness() > 2000)) {
+  while (timer < 100 - (maxStepTime + 20) && i < NB_GENERATION && !(((fittest.nextScore / 70) > 10 && (score / 70) % 6 > 4))) {
     // population.printErr();
     // printErr(fittest.toString(), fittest.getFitness());
     population.evolve();

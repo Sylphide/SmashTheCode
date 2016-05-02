@@ -40,11 +40,11 @@ function computeColorBonus(nbColors) {
   return 0;
 }
 
-function computeScore(nbBlocks, chainPower, colorBonus, groupBonus) {
-  let scoreMultiplier = colorBonus + chainPower + groupBonus;
+function computeScore(nbBlocks, chainPower, colorBonus, groupBonus, skullCleared) {
+  let scoreMultiplier = colorBonus + (chainPower + 2) + groupBonus;
   scoreMultiplier = Math.max(scoreMultiplier, 1);
   scoreMultiplier = Math.min(scoreMultiplier, 999);
-  return (nbBlocks * 10) * scoreMultiplier;
+  return ((nbBlocks + skullCleared) * 10) * scoreMultiplier;
 }
 
 function sortCells(cellsList) {
