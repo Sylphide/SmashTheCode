@@ -47,7 +47,7 @@ export default class Individu {
       }
       // const compareTo = (step / (index + 1));
       // const compareTo = step;
-      const compareTo = step - grid.getTopCell(gene.column).y;
+      const compareTo = (step / Math.max(1, index - 1)) + 2 * grid.getTopCell(gene.column).y;
       if (compareTo > score) {
         score = compareTo;
       }

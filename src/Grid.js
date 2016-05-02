@@ -102,7 +102,7 @@ export default class Grid {
     }
     const colorBonus = Utils.computeColorBonus(colorList.length);
     // printErr(Utils.computeScore(nbCellCleared, chainPower, colorBonus, groupBonus));
-    return Utils.computeScore(nbCellCleared, chainPower, colorBonus, groupBonus);
+    return Utils.computeScore(nbCellCleared, chainPower + 2, colorBonus, groupBonus);
   }
 
   resolveFullBoard(colorList) {

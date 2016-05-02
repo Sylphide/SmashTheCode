@@ -44,25 +44,27 @@ while (true) {
   let i = 0;
   let timer = 0;
   let maxStepTime = 0;
-  while (timer < 100 - maxStepTime && i < NB_GENERATION && !(((fittest.nextScore / 70) > 6 && (score / 70) % 6 > 4) || fittest.getFitness() > 2000)) {
+  let previousStepTime = start;
+  while (timer < 100 - (maxStepTime + 20) && i < NB_GENERATION && !(((fittest.nextScore / 70) > 6 && (score / 70) % 6 > 4) || fittest.getFitness() > 2000)) {
     // population.printErr();
     // printErr(fittest.toString(), fittest.getFitness());
     population.evolve();
     fittest = population.getFittest();
-    const stepTime = (new Date).getTime() - start.getTime();
+    const stepTime = (new Date).getTime() - previousStepTime.getTime();
     if (maxStepTime < stepTime) {
       maxStepTime = stepTime;
     }
     timer = (new Date).getTime() - start.getTime();
     // printErr(fittest.toString(), fittest.getFitness(), (new Date).getTime() - start.getTime());
     i++;
+    previousStepTime = (new Date);
     // if (fittest.getFitness() / 70 > 5) {
     //   break;
     // }
   }
 
   const end = new Date();
-  printErr('Duration : ', end.getTime() - start.getTime());
+  printErr('Duration : ', end.getTime() - start.getTime(), 'generations : ', i);
   // const fittest = population.getFittest();
   printErr(fittest.toString(), fittest.getFitness());
   score += fittest.nextScore;
