@@ -18,6 +18,7 @@ export default class Population {
   evolve() {
     const nextGeneration = [];
     nextGeneration.push(this.getFittest());
+    // printErr(this.getFittest().toString(), this.getFittest().getFitness());
     for (let i = 1; i < SIZE - NEW_MEMBERS; i++) {
       const mate1 = this.tournamentSelection();
       const mate2 = this.tournamentSelection();
@@ -29,6 +30,7 @@ export default class Population {
 
     // nextGeneration.forEach((child) => child.mutate());
     this.individus = nextGeneration;
+    // printErr(this.getFittest().toString(), this.getFittest().getFitness());
   }
 
   tournamentSelection() {
@@ -56,6 +58,8 @@ export default class Population {
   }
 
   shiftBlocks(blocks, rows) {
+    this.blocks = blocks;
+    this.rows = rows;
     this.individus.forEach((individu) => {
       individu.shiftBlocks(blocks, rows);
     });

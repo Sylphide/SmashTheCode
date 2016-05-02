@@ -3,6 +3,7 @@ import Population from './Population';
 import { NB_GENERATION } from './Constants';
 
 let population;
+let score = 0;
 while (true) {
   const blocks = [];
   for (let i = 0; i < 8; i++) {
@@ -37,17 +38,34 @@ while (true) {
   } else {
     population.shiftBlocks(blocks, rows);
   }
-  for (let i = 0; i < NB_GENERATION; i++) {
+  let fittest = population.getFittest();
+  printErr(fittest.toString(), fittest.getFitness());
+  // fittest.printStepByStep();
+  let i = 0;
+  let timer = 0;
+  let maxStepTime = 0;
+  while (timer < 100 - maxStepTime && i < NB_GENERATION && !(((fittest.nextScore / 70) > 6 && (score / 70) % 6 > 4) || fittest.getFitness() > 2000)) {
     // population.printErr();
-    // const fittest = population.getFittest();
     // printErr(fittest.toString(), fittest.getFitness());
     population.evolve();
+    fittest = population.getFittest();
+    const stepTime = (new Date).getTime() - start.getTime();
+    if (maxStepTime < stepTime) {
+      maxStepTime = stepTime;
+    }
+    timer = (new Date).getTime() - start.getTime();
+    // printErr(fittest.toString(), fittest.getFitness(), (new Date).getTime() - start.getTime());
+    i++;
+    // if (fittest.getFitness() / 70 > 5) {
+    //   break;
+    // }
   }
 
   const end = new Date();
-  printErr(end.getTime() - start.getTime());
-  const fittest = population.getFittest();
+  printErr('Duration : ', end.getTime() - start.getTime());
+  // const fittest = population.getFittest();
   printErr(fittest.toString(), fittest.getFitness());
-  // fittest.finalGrid.printErr();
+  score += fittest.nextScore;
+  // fittest.printStepByStep();
   print(fittest.toPrint()); // "x": the column in which to drop your blocks
 }

@@ -63,17 +63,21 @@ export default class Grid {
     const colorList = [];
     let chainPower = 0;
     let groupBonus = 0;
-    const cell1List = this.getSameAdjacentCells(cell1);
+    let cell1List = this.getSameAdjacentCells(cell1);
     let cell2List = [];
     let cell2Done = false;
     cell1List.forEach((cell) => {
-      if (Utils.isEqual(cell, cell2)) {
+      if (!cell2Done && Utils.isEqual(cell, cell2)) {
         cell2Done = true;
+        return;
       }
     });
     if (!cell2Done) {
       cell2List = this.getSameAdjacentCells(cell2);
     }
+    const orderedCellsList = [cell1List, cell2List];
+    Utils.sortCellsList(orderedCellsList);
+    [cell1List, cell2List] = orderedCellsList;
     if (cell1List.length >= 4) {
       nbCellCleared += cell1List.length;
       groupBonus += Utils.computeGroupBonus(cell1List.length);

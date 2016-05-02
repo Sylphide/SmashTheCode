@@ -56,12 +56,24 @@ function sortCells(cellsList) {
   });
 }
 
+function sortCellsList(cellsList) {
+  cellsList.sort((cellsList1, cellsList2) => {
+    sortCells(cellsList1);
+    sortCells(cellsList2);
+    if (cellsList2.length === 0 || cellsList1[0].y < cellsList2[0].y) {
+      return -1;
+    }
+    return 1;
+  });
+}
+
 export const Utils = {
   addColor,
   isSameColor,
   isBothSkull,
   isEqual,
   sortCells,
+  sortCellsList,
   isCellInList,
   computeGroupBonus,
   computeColorBonus,
