@@ -41,7 +41,7 @@ function computeColorBonus(nbColors) {
 }
 
 function computeScore(nbBlocks, chainPower, colorBonus, groupBonus, skullCleared) {
-  let scoreMultiplier = colorBonus + (chainPower + 2) + groupBonus;
+  let scoreMultiplier = colorBonus + chainPower + groupBonus;
   scoreMultiplier = Math.max(scoreMultiplier, 1);
   scoreMultiplier = Math.min(scoreMultiplier, 999);
   return ((nbBlocks + skullCleared) * 10) * scoreMultiplier;

@@ -19,8 +19,12 @@ export default class Individu {
   addGene(gene, allowMutation = true) {
     let finalGene = gene;
     if (allowMutation && Math.random < MUTATION_RATE) {
-      finalGene = new Gene(gene.colorA, gene.colorB);
-      // finalGene.rotation = Math.floor(Math.random() * 4);
+      // finalGene = new Gene(gene.colorA, gene.colorB);
+      if (Math.random < 0.5) {
+        finalGene = new Gene(gene.colorA, gene.colorB, gene.column);
+      } else {
+        finalGene = new Gene(gene.colorA, gene.colorB, null, gene.rotation);
+      }
       this.score = 0;
     }
     this.genome.push(finalGene);
@@ -47,7 +51,17 @@ export default class Individu {
       }
       // const compareTo = (step / (index + 1));
       // const compareTo = step;
-      const compareTo = (step / Math.max(1, index - 2)) + 4 * grid.getTopCell(gene.column).y;
+      let highestNewRow = grid.getTopCell(gene.column).y;
+      let topCell2;
+      if (gene.rotation === 0) {
+        topCell2 = grid.getTopCell(gene.column + 1);
+      } else if (gene.rotation === 2) {
+        topCell2 = grid.getTopCell(gene.column - 1);
+      }
+      if (topCell2) {
+        highestNewRow = Math.min(highestNewRow, topCell2.y);
+      }
+      const compareTo = (step / Math.max(1, index - 2)) + 15 * highestNewRow;
       if (compareTo > score) {
         score = compareTo;
       }
