@@ -39,13 +39,13 @@ while (true) {
     population.shiftBlocks(blocks, rows);
   }
   let fittest = population.getFittest();
-  printErr(fittest.toString(), fittest.getFitness());
+  printErr(fittest.toString(), fittest.getFitness(), fittest.nextScore);
   // fittest.printStepByStep();
   let i = 0;
   let timer = 0;
   let maxStepTime = 0;
   let previousStepTime = start;
-  while (timer < 100 - (maxStepTime + 20) && i < NB_GENERATION && !(((fittest.nextScore / 70) > 10 && (score / 70) % 6 > 4))) {
+  while (timer < 100 - (maxStepTime + 22) && i < NB_GENERATION && !((fittest.nextScore / 70) + (score / 70) % 6 > 17)) {
     // population.printErr();
     // printErr(fittest.toString(), fittest.getFitness());
     population.evolve();
@@ -66,7 +66,7 @@ while (true) {
   const end = new Date();
   printErr('Duration : ', end.getTime() - start.getTime(), 'generations : ', i);
   // const fittest = population.getFittest();
-  printErr(fittest.toString(), fittest.getFitness());
+  printErr(fittest.toString(), fittest.getFitness(), fittest.nextScore);
   score += fittest.nextScore;
   // fittest.printStepByStep();
   print(fittest.toPrint()); // "x": the column in which to drop your blocks

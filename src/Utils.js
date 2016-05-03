@@ -40,11 +40,21 @@ function computeColorBonus(nbColors) {
   return 0;
 }
 
-function computeScore(nbBlocks, chainPower, colorBonus, groupBonus, skullCleared) {
-  let scoreMultiplier = colorBonus + chainPower + groupBonus;
-  scoreMultiplier = Math.max(scoreMultiplier, 1);
-  scoreMultiplier = Math.min(scoreMultiplier, 999);
-  return ((nbBlocks + skullCleared) * 10) * scoreMultiplier;
+function computeScore(scoreParameters) {
+  let score = 0;
+  scoreParameters.forEach((scoreParameter, index) => {
+    const chainPower = index === 0 ? 0 : (8 * Math.pow(2, index - 1));
+    const {
+      colorBonus,
+      groupBonus,
+      nbCellsCleared
+    } = scoreParameter;
+    let scoreMultiplier = colorBonus + chainPower + groupBonus;
+    scoreMultiplier = Math.max(scoreMultiplier, 1);
+    scoreMultiplier = Math.min(scoreMultiplier, 999);
+    score += nbCellsCleared * 10 * scoreMultiplier;
+  });
+  return score;
 }
 
 function sortCells(cellsList) {

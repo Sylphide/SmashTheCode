@@ -64,14 +64,14 @@ export default class Grid {
   }
 
   resolve(cell1, cell2) {
-    let nbCellCleared = 0;
-    const colorList = [];
-    let chainPower = 0;
+    let nbCellsCleared = 0;
+    let colorList = [];
     let groupBonus = 0;
     let skullCleared = 0;
     let cell1List = this.getSameAdjacentCells(cell1);
     let cell2List = [];
     let cell2Done = false;
+    const scoreParameters = [];
     cell1List.forEach((cell) => {
       if (!cell2Done && Utils.isEqual(cell, cell2)) {
         cell2Done = true;
@@ -85,36 +85,52 @@ export default class Grid {
     Utils.sortCellsList(orderedCellsList);
     [cell1List, cell2List] = orderedCellsList;
     if (cell1List.length >= 4) {
-      nbCellCleared += cell1List.length;
+      nbCellsCleared += cell1List.length;
       groupBonus += Utils.computeGroupBonus(cell1List.length);
       Utils.addColor(colorList, parseInt(cell1List[0].value));
       skullCleared += this.clearCells(cell1List);
     }
     if (cell2List.length >= 4) {
-      nbCellCleared += cell2List.length;
+      nbCellsCleared += cell2List.length;
       groupBonus += Utils.computeGroupBonus(cell2List.length);
       Utils.addColor(colorList, parseInt(cell2List[0].value));
       skullCleared += this.clearCells(cell2List);
     }
+    scoreParameters.push({
+      nbCellsCleared,
+      skullCleared,
+      groupBonus,
+      adjacentCells: nbCellsCleared === 0 ? cell1List.length + cell2List.length : 0,
+      colorBonus: Utils.computeColorBonus(colorList.length),
+    });
 
-    if (nbCellCleared > 0) {
-      let stepResult = this.resolveFullBoard(colorList);
+    if (nbCellsCleared > 0) {
+      let stepResult = this.resolveFullBoard();
       while (stepResult.nbCellsCleared > 0) {
-        chainPower++;
-        nbCellCleared += stepResult.nbCellsCleared;
-        groupBonus += stepResult.groupBonus;
-        skullCleared += stepResult.skullCleared;
+        ({
+          nbCellsCleared,
+          groupBonus,
+          skullCleared,
+          colorList
+        } = stepResult);
+        scoreParameters.push({
+          nbCellsCleared,
+          skullCleared,
+          groupBonus,
+          adjacentCells: stepResult.adjacentCells,
+          colorBonus: Utils.computeColorBonus(colorList.length)
+        });
         stepResult = this.resolveFullBoard(colorList);
       }
     }
-    const colorBonus = Utils.computeColorBonus(colorList.length);
-    // printErr(Utils.computeScore(nbCellCleared, chainPower, colorBonus, groupBonus));
-    return Utils.computeScore(nbCellCleared, chainPower, colorBonus, groupBonus, skullCleared);
+    return scoreParameters;
   }
 
-  resolveFullBoard(colorList) {
+  resolveFullBoard() {
     const cellsToClear = [];
+    let adjacentCells = 0;
     let groupBonus = 0;
+    const colorList = [];
     for (let column = 0; column < 6; column++) {
       let currentCell = this.getTopCell(column);
       while (!currentCell.isEmpty()) {
@@ -131,6 +147,8 @@ export default class Grid {
             Utils.addColor(colorList, parseInt(currentCellsList[0].value));
             groupBonus += Utils.computeGroupBonus(currentCellsList.length);
             cellsToClear.push(currentCellsList);
+          } else {
+            adjacentCells += currentCellsList.length;
           }
         }
         currentCell = this.getCell(column, currentCell.y + 1);
@@ -145,7 +163,9 @@ export default class Grid {
     return {
       nbCellsCleared,
       groupBonus,
-      skullCleared
+      skullCleared,
+      colorList,
+      adjacentCells
     };
   }
 
