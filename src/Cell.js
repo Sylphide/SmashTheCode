@@ -12,6 +12,10 @@ export default class Cell {
     return this.value === '.';
   }
 
+  copyCell() {
+    return new Cell(this.x, this.y, this.value);
+  }
+
   toString() {
     return `${this.x} ${this.y} ${this.value}`;
   }

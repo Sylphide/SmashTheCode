@@ -1,14 +1,13 @@
 import Gene from './Gene';
-import Grid from './Grid';
 import { Utils } from './Utils';
 import { DEPTH, MUTATION_RATE } from './Constants';
 
 export default class Individu {
 
-  constructor(rows, blocks, init = false) {
+  constructor(blocks, grid, init = false) {
     this.genome = [];
-    this.fitness = 0;
-    this.rows = rows;
+    this.fitness = -1000;
+    this.currentGrid = grid;
     if (init) {
       for (let i = 0; i < DEPTH; i++) {
         const gene = new Gene(blocks[i].colorA, blocks[i].colorB);
@@ -20,74 +19,100 @@ export default class Individu {
   addGene(gene, allowMutation = true) {
     let finalGene = gene;
     if (allowMutation && Math.random < MUTATION_RATE) {
-      // finalGene = new Gene(gene.colorA, gene.colorB);
-      if (Math.random < 0.5) {
-        finalGene = new Gene(gene.colorA, gene.colorB, gene.column);
-      } else {
-        finalGene = new Gene(gene.colorA, gene.colorB, null, gene.rotation);
-      }
-      this.fitness = 0;
+      finalGene = new Gene(gene.colorA, gene.colorB);
+      // if (Math.random < 0.5) {
+      //   finalGene = new Gene(gene.colorA, gene.colorB, gene.column);
+      // } else {
+      //   finalGene = new Gene(gene.colorA, gene.colorB, null, gene.rotation);
+      // }
+      this.fitness = -1000;
+    }
+    const previousGene = this.genome[this.genome.length - 1];
+    let grid;
+    if (!previousGene) {
+      grid = this.currentGrid.copyGrid();
+    } else {
+      grid = previousGene.currentGrid.copyGrid();
+    }
+    if (!finalGene.previousGrid || !finalGene.previousGrid.isEqual(grid)) {
+      finalGene.previousGrid = grid.copyGrid();
+      finalGene.scoreParameters = grid.putCellBlock(finalGene.column, finalGene.colorA, finalGene.colorB, finalGene.rotation);
+      finalGene.currentGrid = grid;
     }
     this.genome.push(finalGene);
   }
 
   getFitness() {
-    if (this.fitness > 0) {
+    if (this.fitness > -1000) {
       return this.fitness;
     }
-    const grid = new Grid(this.rows);
     let fitness = 0;
-    let loosingPlay = false;
     this.genome.forEach((gene, index) => {
-      if (loosingPlay) {
+      if (fitness === -1) {
         return;
       }
-      const scoreParameters = grid.putCellBlock(gene.column, gene.colorA, gene.colorB, gene.rotation);
-      if (scoreParameters === -1) {
-        loosingPlay = true;
+      if (gene.scoreParameters === -1) {
+        fitness = -1;
         return;
       }
-      const stepScore = Utils.computeScore(scoreParameters);
+      const stepScore = Utils.computeScore(gene.scoreParameters);
       if (index === 0) {
+        // if (stepScore > 0 && gene.scoreParameters.length > 1) {
+        //   printErr(gene.column, gene.rotation, gene.scoreParameters.map((score) => JSON.stringify(score)));
+        //   gene.previousGrid.printErr();
+        //   gene.currentGrid.printErr();
+        // }
         this.nextScore = stepScore;
       }
-      // const compareTo = (step / (index + 1));
-      // const compareTo = step;
-      let highestNewRow = grid.getTopCell(gene.column).y;
+      let highestNewRow = gene.currentGrid.getTopCell(gene.column).y;
       let topCell2;
       if (gene.rotation === 0) {
-        topCell2 = grid.getTopCell(gene.column + 1);
+        topCell2 = gene.currentGrid.getTopCell(gene.column + 1);
       } else if (gene.rotation === 2) {
-        topCell2 = grid.getTopCell(gene.column - 1);
+        topCell2 = gene.currentGrid.getTopCell(gene.column - 1);
       }
       if (topCell2) {
         highestNewRow += topCell2.y;
       }
       let skullCleared = 0;
       let adjacentCells = 0;
-      scoreParameters.forEach((scoreParameter) => {
+      let nbCellsInDiagonals = 0;
+      let nbCellsInDiagonals2 = 0;
+      let nbCellsInColumn = 0;
+      gene.scoreParameters.forEach((scoreParameter) => {
         skullCleared += scoreParameter.skullCleared;
         adjacentCells += scoreParameter.adjacentCells;
+        nbCellsInDiagonals += scoreParameter.nbCellsInDiagonals;
+        nbCellsInDiagonals2 += scoreParameter.nbCellsInDiagonals2;
+        nbCellsInColumn += scoreParameter.nbCellsInColumn;
       });
-      const compareTo = (stepScore / (2 * Math.max(1, index + 1))) + 10 * skullCleared + 20 * adjacentCells;
-      // const compareTo = (highestNewRow * 3) + 10 * skullCleared + 1000 * scoreParameters.length;
-      // const compareTo = (stepScore / (0.5 * Math.max(1, index + 1)));
-      // const compareTo = stepScore + (highestNewRow * 0.5) + 10 * skullCleared;
-      // const compareTo = stepScore;
-      // if (compareTo > fitness) {
+      let compareTo = stepScore / Math.max(1, index - 2);
+      if (index === 0) {
+        compareTo +=
+          + skullCleared
+          + adjacentCells * 3
+          + nbCellsInDiagonals * 1.2 + nbCellsInDiagonals2 * 1.5
+          + nbCellsInColumn * 0.5
+          + highestNewRow * 0.5;
+      }
       fitness += compareTo;
-      // }
     });
     this.fitness = fitness;
-    this.finalGrid = grid;
     return this.fitness;
   }
 
-  shiftBlocks(blocks, rows) {
-    this.rows = rows;
-    this.fitness = 0;
-    // printErr(this.genome.map((gene) => gene.toString()), blocks[DEPTH - 1].colorA, blocks[DEPTH - 1].colorB);
-    this.genome.shift();
+  shiftBlocks(blocks, grid, playedColumn, playedRotation) {
+    this.currentGrid = grid;
+    this.fitness = -1000;
+    const firstGene = this.genome.shift();
+    if (firstGene.column !== playedColumn || firstGene.rotation !== playedRotation) {
+      const previousGrid = this.currentGrid.copyGrid();
+      this.genome.forEach((gene) => {
+        gene.previousGrid = previousGrid.copyGrid();
+        gene.scoreParameters = previousGrid.putCellBlock(gene.column, gene.colorA, gene.colorB, gene.rotation);
+        gene.currentGrid = previousGrid.copyGrid();
+      });
+    }
     this.addGene(new Gene(blocks[DEPTH - 1].colorA, blocks[DEPTH - 1].colorB), false);
   }
 
@@ -96,12 +121,10 @@ export default class Individu {
   }
 
   printStepByStep() {
-    const grid = new Grid(this.rows);
-    grid.printErr();
+    this.currentGrid.printErr();
     this.genome.forEach((gene) => {
-      const step = grid.putCellBlock(gene.column, gene.colorA, gene.colorB, gene.rotation);
-      printErr('Score : ', step === -1 ? step : Utils.computeScore(step));
-      grid.printErr();
+      printErr('Score : ', gene.scoreParameters === -1 ? gene.scoreParameters : Utils.computeScore(gene.scoreParameters));
+      gene.currentGrid.printErr();
     });
   }
 

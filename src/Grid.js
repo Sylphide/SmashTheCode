@@ -5,28 +5,34 @@ import { Utils } from './Utils';
 export default class Grid {
 
   constructor(rows) {
-    this.rows = [];
-    rows.forEach((row, y) => {
-      const columns = row.split('');
-      this.rows.push(columns.map((cellValue, x) => new Cell(x, y, cellValue)));
-    });
+    this.rows = rows;
+  }
+
+  copyGrid() {
+    return new Grid(this.rows.map((row) => Array.concat(row)));
   }
 
   getCell(x, y) {
     if (x >= 6 || x < 0 || y >= 12 || y < 0) {
       return new Cell(-1, -1, '.');
     }
-    return this.rows[y][x];
+    return new Cell(x, y, this.rows[y][x]);
   }
 
   getTopCell(column) {
     for (let i = 0; i < this.rows.length; i++) {
-      const cell = this.rows[i][column];
+      const cell = this.getCell(column, i);
       if (!cell.isEmpty()) {
         return cell;
       }
     }
     return new Cell(column, 12, '.');
+  }
+
+  setCellValue(cellToSet, value) {
+    if (cellToSet.x !== -1 && cellToSet.y !== -1) {
+      this.rows[cellToSet.y][cellToSet.x] = value;
+    }
   }
 
   clearCell(x, y) {
@@ -45,7 +51,7 @@ export default class Grid {
       //   this.clearCell(nextCell.x, nextCell.y);
       //   nextCell = this.getCell(nextCell.x, nextCell.y);
       // }
-      currentCell.value = nextCell.value;
+      this.setCellValue(currentCell, nextCell.value);
       currentCell = this.getCell(x, currentRow);
     }
     return skullCleared;
@@ -68,6 +74,12 @@ export default class Grid {
     let colorList = [];
     let groupBonus = 0;
     let skullCleared = 0;
+    const nbCellsInDiagonals =
+      this.getSameCellsInDiagonals(cell1) + this.getSameCellsInDiagonals(cell2);
+    const nbCellsInDiagonals2 =
+      this.getSameCellsInDiagonals(cell1) + this.getSameCellsInDiagonals(cell2);
+    const nbCellsInColumn =
+      this.getSameCellsInColumn(cell1) + this.getSameCellsInColumn(cell2);
     let cell1List = this.getSameAdjacentCells(cell1);
     let cell2List = [];
     let cell2Done = false;
@@ -100,6 +112,9 @@ export default class Grid {
       nbCellsCleared,
       skullCleared,
       groupBonus,
+      nbCellsInDiagonals,
+      nbCellsInDiagonals2,
+      nbCellsInColumn,
       adjacentCells: nbCellsCleared === 0 ? cell1List.length + cell2List.length : 0,
       colorBonus: Utils.computeColorBonus(colorList.length),
     });
@@ -118,6 +133,9 @@ export default class Grid {
           skullCleared,
           groupBonus,
           adjacentCells: stepResult.adjacentCells,
+          nbCellsInDiagonals: stepResult.nbCellsInDiagonals,
+          nbCellsInDiagonals2: stepResult.nbCellsInDiagonals2,
+          nbCellsInColumn: stepResult.nbCellsInColumn,
           colorBonus: Utils.computeColorBonus(colorList.length)
         });
         stepResult = this.resolveFullBoard(colorList);
@@ -165,7 +183,10 @@ export default class Grid {
       groupBonus,
       skullCleared,
       colorList,
-      adjacentCells
+      adjacentCells: 0,
+      nbCellsInColumn: 0,
+      nbCellsInDiagonals: 0,
+      nbCellsInDiagonals2: 0
     };
   }
 
@@ -182,6 +203,51 @@ export default class Grid {
       }
     });
     return cellsList;
+  }
+
+  getSameCellsInDiagonals(cell) {
+    const cellsInDiagonals = [
+      this.getCell(cell.x - 1, cell.y - 1),
+      this.getCell(cell.x + 1, cell.y - 1),
+      this.getCell(cell.x - 1, cell.y + 1),
+      this.getCell(cell.x + 1, cell.y + 1),
+      this.getCell(cell.x, cell.y + 2)
+    ];
+    let count = 0;
+    for (let i = 0; i < cellsInDiagonals.length; i++) {
+      if (Utils.isSameColor(cell, cellsInDiagonals[i])) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  getSameCellsInDiagonals2(cell) {
+    const cellsInDiagonals = [
+      this.getCell(cell.x - 1, cell.y - 2),
+      this.getCell(cell.x + 1, cell.y - 2),
+      this.getCell(cell.x - 1, cell.y + 2),
+      this.getCell(cell.x + 1, cell.y + 2)
+    ];
+    let count = 0;
+    for (let i = 0; i < cellsInDiagonals.length; i++) {
+      if (Utils.isSameColor(cell, cellsInDiagonals[i])) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  getSameCellsInColumn(cell) {
+    let count = 0;
+    let currentCell = this.getCell(cell.x, cell.y + 1);
+    while (!currentCell.isEmpty()) {
+      if (Utils.isSameColor(cell, currentCell)) {
+        count++;
+      }
+      currentCell = this.getCell(currentCell.x, currentCell.y + 1);
+    }
+    return count;
   }
 
   getAdjacentCell(cell, direction) {
@@ -212,9 +278,8 @@ export default class Grid {
 
   putCell(column, value) {
     const topCell = this.getTopCell(column);
-    const cell = this.getCell(column, topCell.y - 1);
-    cell.value = value;
-    return cell;
+    this.setCellValue(this.getCell(column, topCell.y - 1), value);
+    return new Cell(column, topCell.y - 1, value);
   }
 
   putCellBlock(column, color1, color2, rotation) {
@@ -253,7 +318,15 @@ export default class Grid {
     return this.resolve(cell1, cell2);
   }
 
+  isEqual(grid) {
+    let result = true;
+    this.rows.forEach((row, y) => row.forEach((value, x) => {
+      result = result ? grid.rows[y][x] === value : false;
+    }));
+    return result;
+  }
+
   printErr() {
-    this.rows.forEach((row) => printErr(row.map((cell) => cell.value)));
+    this.rows.forEach((row) => printErr(row.map((cell) => cell)));
   }
 }
